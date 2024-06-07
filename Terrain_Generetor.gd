@@ -13,6 +13,7 @@ extends Node3D
 var tempreture = {}
 var moisture = {}
 var altitude = {}
+var water_pos
 # Noise generators
 @export var terrain_noise:FastNoiseLite
 @export var biome_noise:FastNoiseLite
@@ -33,7 +34,6 @@ func _ready():
 	water_mesh_instance.material_override = water_material
 	# Generate the terrain mesh
 	var terrain_mesh = generate_terrain()
-	Biome_Generetor()
 	terrain_mesh_instance.mesh = terrain_mesh
 	add_child(terrain_mesh_instance)
 
@@ -57,7 +57,7 @@ func generate_terrain():
 			var v1 = Vector3((x + 1) * CELL_SIZE, terrain_noise.get_noise_2d((x + 1) * CELL_SIZE, z * CELL_SIZE) * HEIGHT_SCALE, z * CELL_SIZE)
 			var v2 = Vector3(x * CELL_SIZE, terrain_noise.get_noise_2d(x * CELL_SIZE, (z + 1) * CELL_SIZE) * HEIGHT_SCALE, (z + 1) * CELL_SIZE)
 			var v3 = Vector3((x + 1) * CELL_SIZE, terrain_noise.get_noise_2d((x + 1) * CELL_SIZE, (z + 1) * CELL_SIZE) * HEIGHT_SCALE, (z + 1) * CELL_SIZE)
-
+		
 			# Create the two triangles for the quad
 			terrain_mesh.add_vertex(v0)
 			terrain_mesh.add_vertex(v1)
@@ -67,7 +67,7 @@ func generate_terrain():
 			terrain_mesh.add_vertex(v3)
 			terrain_mesh.add_vertex(v2)
 			#biomes
-			
+	Biome_Generetor()
 	terrain_mesh.index()
 	return terrain_mesh.commit()
 
@@ -114,15 +114,112 @@ func get_altitude():
 			gridname[Vector2(x, z)] = rand
 	return gridname	
 
-#paints the mash according to the variables			
 func Biome_Generetor():
-	for x in WIDTH:
-		for z in DEPTH:
+	for x in range(WIDTH):
+		for z in range(DEPTH):
 			var pos = Vector2(x, z)
 			var alt = altitude[pos]
 			var temp = tempreture[pos]
 			var moist = moisture[pos]
 			
+			# Assign biomes based on altitude, temperature, and moisture
+			var biome = assign_biome(alt, temp, moist)
+			
+			# Do something with the assigned biome (e.g., color terrain)
+			color_terrain(pos, biome)
+			
+
+func assign_biome(altitude, temperature, moisture):
+	if altitude < WATER_LEVEL:
+		return "Ocean"
+	
+	if altitude < WATER_LEVEL + 0.2:
+		return "Beach"
+	
+	if temperature > 1:
+		if moisture < 0.2:
+			return "Desert"
+		elif moisture < 0.6:
+			return "Savanna"
+		else:
+			return "Tropical Rainforest"
+	
+	if temperature < 0.5:
+		if moisture < 0.4:
+			return "Tundra"
+		else:
+			return "Taiga"
+	
+	if moisture < 0.2:
+		return "Grassland"
+	
+	if moisture < 0.6:
+		return "Forest"
+	
+	return "Rainforest"
+
+func color_terrain(position, biome):
+	# Example: Color terrain based on biome
+	var terrain_color
+	
+	if biome == "Ocean":
+		terrain_color = Color(0.2, 0.4, 0.8)
+	elif biome == "Beach":
+		terrain_color = Color(0.9, 0.8, 0.6)
+	elif biome == "Desert":
+		terrain_color = Color(0.9, 0.8, 0.5)
+	elif biome == "Savanna":
+		terrain_color = Color(0.7, 0.8, 0.4)
+	elif biome == "Tropical Rainforest":
+		terrain_color = Color(0.1, 0.5, 0.1)
+	elif biome == "Tundra":
+		terrain_color = Color(0.8, 0.9, 0.9)
+	elif biome == "Taiga":
+		terrain_color = Color(0.6, 0.7, 0.7)
+	elif biome == "Grassland":
+		terrain_color = Color(0.4, 0.7, 0.2)
+	elif biome == "Forest":
+		terrain_color = Color(0.2, 0.5, 0.1)
+	elif biome == "Rainforest":
+		terrain_color = Color(0.1, 0.3, 0.1)
+	else:
+		terrain_color = Color(1, 1, 1)  # Default color if biome not recognized
+	
+	# Apply the terrain color to the terrain at the specified position
+	apply_terrain_color(position, terrain_color)
+
+	# Example: Color terrain based on biome
+	match biome:
+		"Ocean":
+			return Color(0.2, 0.4, 0.8)
+		"Beach":
+			return Color(0.9, 0.8, 0.6)
+		"Desert":
+			return Color(0.9, 0.8, 0.5)
+		"Savanna":
+			return Color(0.7, 0.8, 0.4)
+		"Tropical Rainforest":
+			return Color(0.1, 0.5, 0.1)
+		"Tundra":
+			return Color(0.8, 0.9, 0.9)
+		"Taiga":
+			return Color(0.6, 0.7, 0.7)
+		"Grassland":
+			return Color(0.4, 0.7, 0.2)
+		"Forest":
+			return Color(0.2, 0.5, 0.1)
+		"Rainforest":
+			return Color(0.1, 0.3, 0.1)
+	
+	# Apply the terrain color to the terrain at the specified position
+	apply_terrain_color(position, terrain_color)
+
+func apply_terrain_color(position, color):
+	# Example: Set the color of the terrain at the specified position
+	# This is where you would apply the color to your terrain mesh
+	# Replace this with your actual implementation
+	print(position, color)
+	
 func between(val, start, end):
 	if start <= val or val < end:
 		return true
